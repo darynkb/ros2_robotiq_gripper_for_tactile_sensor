@@ -79,7 +79,7 @@ pluginlib_export_plugin_description_file(hardware_interface hardware_interface_p
 # Without this a client cannot find this library.
 # It can take an arbitrary list of targets named as EXPORT in an install call.
 ament_export_targets(
-  robotiq_driver_targets # Must match the EXPORT label below in the install section.
+  robotiq_driver_targets HAS_LIBRARY_TARGET # Must match the EXPORT label below in the install section.
 )
 # Help downstream packages to find transitive dependencies i.e. export all
 # dependencies required by a package to use this library.

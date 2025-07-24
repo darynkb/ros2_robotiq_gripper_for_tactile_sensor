@@ -31,6 +31,44 @@ add_executable(full_test
     src/command_line_utility.hpp
     src/command_line_utility.cpp
 )
+
+add_executable(gripper_demo
+    src/gripper_demo.cpp
+    src/command_line_utility.hpp
+    src/command_line_utility.cpp
+)
+
+add_executable(arrow_control
+    src/arrow_control.cpp
+    src/command_line_utility.hpp
+    src/command_line_utility.cpp
+)
+
+add_executable(grasp_publisher
+    src/grasp_publisher.cpp
+    src/command_line_utility.hpp
+    src/command_line_utility.cpp
+)
+
 ament_target_dependencies(full_test robotiq_driver)
+ament_target_dependencies(gripper_demo robotiq_driver)
+ament_target_dependencies(arrow_control robotiq_driver)
+ament_target_dependencies(grasp_publisher robotiq_driver)
+
+install(TARGETS full_test
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS gripper_demo
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS arrow_control
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS grasp_publisher
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()

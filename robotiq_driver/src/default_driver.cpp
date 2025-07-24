@@ -39,6 +39,13 @@
 #include <robotiq_driver/driver_exception.hpp>
 
 #include <rclcpp/rclcpp.hpp>
+#include <mutex>
+
+#include <fstream>
+#include <vector>
+#include <atomic>
+#include <thread>
+#include <chrono>
 
 namespace robotiq_driver
 {
@@ -74,8 +81,27 @@ constexpr size_t kPositionIndex = 4;
 // If the gripper connection is not stable we may want to try sending the command again.
 constexpr auto kMaxRetries = 5;
 
+std::vector<std::pair<uint64_t, int>> gripper_samples;
+std::atomic<bool> recording_gripper{false};
+std::thread gripper_thread;
+
+// Helper to get current time in microseconds
+uint64_t now_us() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+// Function to sample gripper position
+void gripper_sampler(DefaultDriver* driver) {
+    while (recording_gripper) {
+        int pos = static_cast<int>(driver->get_gripper_position());
+        gripper_samples.emplace_back(now_us(), pos);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // 100 Hz
+    }
+}
+
 DefaultDriver::DefaultDriver(std::unique_ptr<Serial> serial)
-  : serial_{ std::move(serial) }, commanded_gripper_speed_(0x80), commanded_gripper_force_(0x80)
+  : serial_{ std::move(serial) }, commanded_gripper_speed_(0x0F), commanded_gripper_force_(0x80)
 {
 }
 
@@ -185,6 +211,19 @@ uint8_t DefaultDriver::get_gripper_position()
   update_status();
   return gripper_position_;
 }
+
+// uint8_t DefaultDriver::get_gripper_position()
+// {
+//   const auto request = create_read_command(kFirstOutputRegister, kNumOutputRegisters);
+//   auto response = send(request, kReadResponseSize);
+//   if (response.empty())
+//   {
+//     throw DriverException{ "Failed to read the gripper status." };
+//   }
+//   // Read the current gripper position.
+//   gripper_position_ = response[kResponseHeaderSize + kPositionIndex];
+//   return gripper_position_;
+// }
 
 bool DefaultDriver::gripper_is_moving()
 {
